@@ -95,16 +95,74 @@ def missing_values(df):
 
 
 
+def missing_col_values(df):
+    """
+    missing_col_values takes in a datatframe of observations and attributes and
+    returns a new dataframe consisting of:
+    - the number of columns missing
+    - percent of columns missing
+    - number of rows with n columns missing.
+    """
+    col1 = pd.DataFrame(df.isna().sum(axis=1))
+    col1 = col1.rename(columns={0: "num_cols_missing"})
+    
+    col2 = pd.DataFrame(((df.isna().sum(axis=1)) / len(df.columns))*100)
+    col2 = col2.rename(columns={0: "pct_cols_missing"})
+    
+    col12 = col1.merge(col2, left_index=True, right_index=True, how='left')
+    col12 = col12.sort_values(by=['num_cols_missing'])
+    col12.reset_index(drop=True, inplace=True)
+    
+    col3 = pd.DataFrame(col12.num_cols_missing.value_counts(ascending=True))
+    col3 = col3.rename(columns={'num_cols_missing': 'num_rows'})
+
+    
+    df1 = pd.merge(col12, col3, left_on='num_cols_missing', right_index=True, how='left')
+    
+    return df1
 
 
 
 
 
+'''
+*------------------*
+|                  |
+|     PREPARE      |
+|                  |
+*------------------*
+'''
 
 
 
 
 
+def drop_based_on_pct(df, pc, pr):
+    """
+    drop_based_on_pct takes in: 
+    - dataframe, 
+    - threshold percent of non-null values for columns(# between 0-1), 
+    - threshold percent of non-null values for rows(# between 0-1)
+    
+    Returns: a dataframe with the columns and rows dropped as indicated.
+    """
+    
+    tpc = 1-pc
+    tpr = 1-pr
+    
+    df.dropna(axis = 1, thresh = tpc * len(df.index), inplace = True)
+    
+    df.dropna(axis = 0, thresh = tpr * len(df.columns), inplace = True)
+    
+    return df
+    
+    
+    
+
+
+def remove_columns(df, cols_to_remove):  
+    df = df.drop(columns=cols_to_remove)
+    return df
 
 
 
