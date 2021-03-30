@@ -178,18 +178,19 @@ def handle_missing_values(df, prop_required_column = .5, prop_required_row = .70
 
 
 def wrangle_zillow():
-    df = pd.read_csv('zillow.csv')
+    df = pd.read_csv('zillow17.csv')
+    
+    df = df.set_index("parcelid")
     
     # Restrict df to only properties that meet single use criteria
     single_use = [261, 262, 263, 264, 266, 268, 273, 276, 279]
     df = df[df.propertylandusetypeid.isin(single_use)]
     
     # Restrict df to only those properties with at least 1 bath & bed and 350 sqft area
-    df = df[(df.bedroomcnt > 0) & (df.bathroomcnt > 0) & ((df.unitcnt<=1)|df.unitcnt.isnull())\
-            & (df.calculatedfinishedsquarefeet>350)]
+    df = df[(df.bedroomcnt > 0) & (df.bathroomcnt > 0) & ((df.unitcnt<=1)|df.unitcnt.isnull()) & (df.calculatedfinishedsquarefeet>350)]
 
     # Handle missing values i.e. drop columns and rows based on a threshold
-    df = handle_missing_values(df)
+    df = drop_based_on_pct(df, .5, .7)
     
     # Add column for counties
     df['county'] = np.where(df.fips == 6037, 'Los_Angeles',
@@ -199,7 +200,7 @@ def wrangle_zillow():
     # drop unnecessary columns
     df = remove_columns(df, ['id',
        'calculatedbathnbr', 'finishedsquarefeet12', 'fullbathcnt', 'heatingorsystemtypeid'
-       ,'propertycountylandusecode', 'propertylandusetypeid','propertyzoningdesc', 
+       , 'heatingorsystemtypeid.1', 'propertycountylandusecode', 'propertylandusetypeid','propertyzoningdesc', 
         'censustractandblock', 'propertylandusedesc'])
     
     # replace nulls in unitcnt with 1
@@ -209,7 +210,7 @@ def wrangle_zillow():
     df.heatingorsystemdesc.fillna('None', inplace = True)
     
     # replace nulls with median values for select columns
-    df.lotsizesquarefeet.fillna(7313, inplace = True)
+    df.lotsizesquarefeet.fillna(7314, inplace = True)
     df.buildingqualitytypeid.fillna(6.0, inplace = True)
 
     # Columns to look for outliers
