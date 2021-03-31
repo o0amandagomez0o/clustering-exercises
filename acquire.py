@@ -125,6 +125,20 @@ def missing_col_values(df):
 
 
 
+def get_mall():
+    '''
+    This function reads in the `mall_customers` datatset from the Codeup SQL DB
+    '''
+    
+    sql = """
+    select *
+    from customers
+    """
+    return pd.read_sql(sql, get_connection('mall_customers'))
+
+
+
+
 '''
 *------------------*
 |                  |
