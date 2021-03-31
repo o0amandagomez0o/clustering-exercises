@@ -127,6 +127,20 @@ def missing_col_values(df):
 
 
 
+def get_mall():
+    '''
+    This function reads in the `mall_customers` datatset from the Codeup SQL DB
+    '''
+    
+    sql = """
+    select *
+    from customers
+    """
+    return pd.read_sql(sql, get_connection('mall_customers'))
+
+
+
+
 '''
 *------------------*
 |                  |
@@ -474,6 +488,22 @@ def scale_my_data(train, validate, test):
 
 
 
+def min_max_scaler(train, valid, test):
+    '''
+    Uses the train & test datasets created by the split function
+    Returns 3 items: mm_scaler, train_scaled_mm, test_scaled_mm
+    This is a linear transformation. Values will lie between 0 and 1
+    '''
+    num_vars = list(train.select_dtypes('number').columns)
+    scaler = MinMaxScaler(copy=True, feature_range=(0,1))
+    train[num_vars] = scaler.fit_transform(train[num_vars])
+    valid[num_vars] = scaler.transform(valid[num_vars])
+    test[num_vars] = scaler.transform(test[num_vars])
+    return scaler, train, valid, test
+
+
+
+
 
 def split_zillowdf(df):
     '''
@@ -486,3 +516,36 @@ def split_zillowdf(df):
     train, validate, test = train_validate_test_split(df, target='zestimateerror', seed=123)
     train, validate, test = scale_my_data(train, validate, test)
     return df, train, validate, test
+
+
+
+
+
+def wrangle_mall():
+    """
+    wrangle_mall will:
+    - acquire mall dataset from SQL
+    - remove outliers
+    - encode & drop gender column 
+    - perform full split of df
+    - scale split dfs using MinMax scaler
+    """
+    
+    #ACQUIRE
+    mall = get_mall()
+    
+    #PREP    
+    #outliers
+    upper_bound, lower_bound = outlier(mall, 'annual_income', 1.5)
+    mall = mall[mall.annual_income < upper_bound]
+    
+    #dummies
+    mall['male'] = pd.get_dummies(mall.gender, drop_first=True)
+    #drop encoded col
+    mall.drop(columns='gender', inplace=True)
+    
+    #SPLIT
+    train, validate, test = split_zillow(mall)
+    
+    #SCALE   
+    return min_max_scaler(train, validate, test)
